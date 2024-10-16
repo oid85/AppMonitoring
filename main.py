@@ -1,24 +1,47 @@
 import time
 import psutil
+import json
+from datetime import datetime
+import os
 
 
 def do():
     process_name = "mstsc.exe"
-    seconds = 0.0
+    interval = 60
 
     while True:
         try:
-            interval = 15.0
+            file_name = datetime.now().strftime('%d-%m-%Y') + '.json'
+
+            if os.path.isfile(file_name):
+                with open(file_name) as json_file:
+                    data = json.load(json_file)
+
+            else:
+                data = {process_name: {"hours": 5, "minutes": 30}}
+
             for proc in psutil.process_iter():
                 name = proc.name()
                 if name == process_name:
-                    seconds = seconds + interval
+                    hours = data[process_name]["hours"]
+                    minutes = data[process_name]["minutes"]
 
-            print(process_name, seconds/60, " мин.")
+                    minutes = minutes + 1
+
+                    if minutes >= 60:
+                        minutes = 0
+                        hours = hours + 1
+
+                    data[process_name]["hours"] = hours
+                    data[process_name]["minutes"] = minutes
+
+            with open(file_name, 'w') as outfile:
+                json.dump(data, outfile)
+
             time.sleep(interval)
 
-        except Exception:
-            print("Error...")
+        except Exception as exception:
+            print(exception)
 
 
 if __name__ == '__main__':
